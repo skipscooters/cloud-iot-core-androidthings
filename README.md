@@ -1,7 +1,8 @@
 # Cloud IoT Core Client for Android Things (Skip Fork)
 
 This is a **fork** of Google's Android Cloud IoT Core Client. The primary changes are:
-* None yet
+* Reduce min sdk to 24
+* Switch from Java 8 Date/Time objects that aren't available on older Android versions to use backport classes via ThreeTenABP
 
 The Cloud IoT Core Client makes it simple to integrate Android Things with Cloud IoT Core by
 providing abstractions for all of Cloud IoT Core's

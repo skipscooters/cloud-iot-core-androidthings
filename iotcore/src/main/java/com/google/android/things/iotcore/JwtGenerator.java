@@ -24,9 +24,9 @@ import org.jose4j.jwt.NumericDate;
 import org.jose4j.lang.JoseException;
 
 import java.security.KeyPair;
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
+import org.threeten.bp.Clock;
+import org.threeten.bp.Duration;
+import org.threeten.bp.Instant;
 
 
 /**

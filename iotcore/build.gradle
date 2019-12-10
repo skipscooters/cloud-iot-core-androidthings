@@ -4,7 +4,7 @@ android {
     compileSdkVersion 28
 
     defaultConfig {
-        minSdkVersion 27
+        minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -33,6 +33,8 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
+    implementation 'com.jakewharton.threetenabp:threetenabp:1.1.1'
+
     implementation 'com.android.support:support-annotations:28.0.0'
     testImplementation 'com.google.truth:truth:0.40'
     testImplementation 'junit:junit:4.12'
@@ -53,5 +55,3 @@ dependencies {
     // JWT
     implementation 'org.bitbucket.b_c:jose4j:0.6.3'
 }
-
-apply from: 'publish.gradle'

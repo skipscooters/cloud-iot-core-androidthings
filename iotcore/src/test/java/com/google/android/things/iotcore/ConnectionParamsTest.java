@@ -22,7 +22,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
 import java.security.KeyPair;
-import java.time.Duration;
+import org.threeten.bp.Duration;
 import java.util.concurrent.TimeUnit;
 
 /** ConnectionParams unit tests. */

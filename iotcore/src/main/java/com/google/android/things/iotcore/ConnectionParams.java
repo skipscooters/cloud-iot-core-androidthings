@@ -17,7 +17,8 @@ package com.google.android.things.iotcore;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
-import java.time.Duration;
+import org.threeten.bp.Duration;
+
 import java.util.concurrent.TimeUnit;
 
 /**
