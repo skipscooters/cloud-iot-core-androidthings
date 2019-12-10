@@ -1,4 +1,7 @@
-# Cloud IoT Core Client for Android Things
+# Cloud IoT Core Client for Android Things (Skip Fork)
+
+This is a **fork** of Google's Android Cloud IoT Core Client. The primary changes are:
+* None yet
 
 The Cloud IoT Core Client makes it simple to integrate Android Things with Cloud IoT Core by
 providing abstractions for all of Cloud IoT Core's
