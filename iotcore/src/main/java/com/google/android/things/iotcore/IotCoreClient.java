@@ -695,7 +695,6 @@ public class IotCoreClient {
                 mConnectionParams.getTelemetryTopic() + mUnsentTelemetryEvent.getTopicSubpath(),
                 mUnsentTelemetryEvent.getData(),
                 mUnsentTelemetryEvent.getQos());
-        Log.d(TAG, "Published telemetry event: " + new String(mUnsentTelemetryEvent.getData()));
 
         // Event sent successfully. Clear the cached event.
         mUnsentTelemetryEvent = null;

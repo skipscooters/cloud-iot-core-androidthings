@@ -26,7 +26,7 @@ import java.util.Deque;
 import java.util.Iterator;
 
 /** Queue implementation with limited capacity. */
-class CapacityQueue<E> extends AbstractQueue<E> {
+public class CapacityQueue<E> extends AbstractQueue<E> {
     private static final String TAG = CapacityQueue.class.getSimpleName();
 
     /**
@@ -40,8 +40,8 @@ class CapacityQueue<E> extends AbstractQueue<E> {
      * oldest element, the element at the head of the queue, is discarded and the new element is
      * added to the back of the queue.
      */
-    static final int DROP_POLICY_HEAD = 0;
-    static final int DROP_POLICY_TAIL = 1;
+    public static final int DROP_POLICY_HEAD = 0;
+    public static final int DROP_POLICY_TAIL = 1;
 
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({DROP_POLICY_HEAD, DROP_POLICY_TAIL})
@@ -51,7 +51,7 @@ class CapacityQueue<E> extends AbstractQueue<E> {
     private final int mMaxCapacity;
     private final @DropPolicy int mDropPolicy;
 
-    CapacityQueue(int maxCapacity, @DropPolicy int dropPolicy) {
+    public CapacityQueue(int maxCapacity, @DropPolicy int dropPolicy) {
         if (maxCapacity <= 0) {
             throw new IllegalArgumentException("Queue capacity must be greater than 0");
         }
