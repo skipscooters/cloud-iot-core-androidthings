@@ -138,6 +138,8 @@ public class IotCoreClient {
     @GuardedBy("mQueueLock")
     private final Queue<TelemetryEvent> mTelemetryQueue;
 
+    private final IotClientLogger mLogger;
+
     // Client callbacks.
     private final Executor mConnectionCallbackExecutor;
     private final ConnectionCallback mConnectionCallback;
@@ -172,6 +174,7 @@ public class IotCoreClient {
             @NonNull KeyPair keyPair,
             @NonNull MqttClient mqttClient,
             @NonNull Queue<TelemetryEvent> telemetryQueue,
+            @NonNull IotClientLogger logger,
             @Nullable Executor connectionCallbackExecutor,
             @Nullable ConnectionCallback connectionCallback,
             @Nullable Executor onConfigurationExecutor,
@@ -188,6 +191,7 @@ public class IotCoreClient {
                 new AtomicBoolean(false),
                 new AtomicReference<byte[]>(),
                 telemetryQueue,
+                logger,
                 connectionCallbackExecutor,
                 connectionCallback,
                 onConfigurationExecutor,
@@ -212,6 +216,7 @@ public class IotCoreClient {
             @NonNull AtomicBoolean runBackgroundThread,
             @NonNull AtomicReference<byte[]> unsentDeviceState,
             @NonNull Queue<TelemetryEvent> telemetryQueue,
+            @NonNull IotClientLogger logger,
             @Nullable Executor connectionCallbackExecutor,
             @Nullable ConnectionCallback connectionCallback,
             @Nullable Executor onConfigurationExecutor,
@@ -247,6 +252,7 @@ public class IotCoreClient {
         mRunBackgroundThread = runBackgroundThread;
         mUnsentDeviceState = unsentDeviceState;
         mTelemetryQueue = telemetryQueue;
+        mLogger = logger;
         mConnectionCallbackExecutor = connectionCallbackExecutor;
         mConnectionCallback = connectionCallback;
         mSemaphore = semaphore;
@@ -272,6 +278,7 @@ public class IotCoreClient {
         private ConnectionParams mConnectionParams;
         private KeyPair mKeyPair;
         private Queue<TelemetryEvent> mTelemetryQueue;
+        private IotClientLogger mLogger;
         private Executor mOnConfigurationExecutor;
         private OnConfigurationListener mOnConfigurationListener;
         private Executor mOnCommandExecutor;
@@ -338,6 +345,20 @@ public class IotCoreClient {
                 @NonNull Queue<TelemetryEvent> telemetryQueue) {
             checkNotNull(telemetryQueue, "Telemetry queue");
             mTelemetryQueue = telemetryQueue;
+            return this;
+        }
+
+        /**
+         * Set the interface for logging events.
+         *
+         * <p>This parameter is required.
+         *
+         * @return this builder
+         */
+        public Builder setLogger(
+                @NonNull IotClientLogger logger) {
+            checkNotNull(logger, "Logger");
+            mLogger = logger;
             return this;
         }
 
@@ -463,6 +484,7 @@ public class IotCoreClient {
         public IotCoreClient build() {
             checkNotNull(mConnectionParams, "ConnectionParams");
             checkNotNull(mKeyPair, "KeyPair");
+            checkNotNull(mLogger, "Logger");
             if (mTelemetryQueue == null) {
                 mTelemetryQueue =
                         new CapacityQueue<>(DEFAULT_QUEUE_CAPACITY, CapacityQueue.DROP_POLICY_HEAD);
@@ -509,6 +531,7 @@ public class IotCoreClient {
                     mKeyPair,
                     mqttClient,
                     mTelemetryQueue,
+                    mLogger,
                     mConnectionCallbackExecutor,
                     mConnectionCallback,
                     mOnConfigurationExecutor,
@@ -589,10 +612,12 @@ public class IotCoreClient {
             }
 
             // Shut down the thread
+            mLogger.onThreadShutdown();
             try {
                 mMqttClient.disconnectForcibly();
             } catch (MqttException mqttException) {
                 Log.e(TAG, "Error disconnecting from Cloud IoT Core", mqttException);
+                mLogger.onErrorDisconnecting(mqttException);
             }
             onDisconnect(ConnectionCallback.REASON_CLIENT_CLOSED);
             mBackgroundThread = null;
@@ -602,6 +627,7 @@ public class IotCoreClient {
     @VisibleForTesting
     void reconnectLoop() {
         Log.d(TAG, "in reconnect loop");
+        mLogger.onConnectAttempt();
         try {
             connectMqttClient();
 
@@ -612,17 +638,20 @@ public class IotCoreClient {
             doConnectedTasks();
         } catch (MqttException mqttException) {
             if (isRetryableError(mqttException)) {
+                mLogger.onRetryableException(mqttException);
                 sleepUntil(Instant.now().plusMillis(mBackoff.nextBackoff()));
             } else {
                 // Error isn't recoverable. I.e. the error has to do with the way the client is
                 // configured. Stop the thread to avoid spamming GCP.
                 mRunBackgroundThread.set(false);
+                mLogger.onUnretryableException(mqttException);
                 Log.e(TAG, "Disconnected from Cloud IoT Core and cannot reconnect", mqttException);
             }
             onDisconnect(getDisconnectionReason(mqttException));
         } catch (JoseException joseException) {
             // Error signing the JWT. Not a retryable error.
             mRunBackgroundThread.set(false);
+            mLogger.onJwtException(joseException);
             Log.e(TAG, "Disconnected from Cloud IoT Core and cannot reconnect", joseException);
         }
     }
@@ -724,6 +753,7 @@ public class IotCoreClient {
 
             // Return success and don't try to resend the message that caused the exception. Log
             // the error so the user has some indication that something went wrong.
+            mLogger.onPublishError(topic, data.length, mqttException);
             Log.w(TAG, "Error publishing message to " + topic, mqttException);
         }
     }
@@ -854,6 +884,7 @@ public class IotCoreClient {
 
     // Call client's connection callbacks
     private void onConnection() {
+        mLogger.onConnection();
         if (mConnectionCallback == null) {
             return;
         }
@@ -871,6 +902,7 @@ public class IotCoreClient {
 
     // Call client's connection callbacks
     private void onDisconnect(@ConnectionCallback.DisconnectReason final int reason) {
+        mLogger.onDisconnect(reason);
         if (mConnectionCallback == null) {
             return;
         }
