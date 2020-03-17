@@ -639,14 +639,14 @@ public class IotCoreClient {
         } catch (MqttException mqttException) {
             if (isRetryableError(mqttException)) {
                 mLogger.onRetryableException(mqttException);
-                sleepUntil(Instant.now().plusMillis(mBackoff.nextBackoff()));
             } else {
-                // Error isn't recoverable. I.e. the error has to do with the way the client is
-                // configured. Stop the thread to avoid spamming GCP.
-                mRunBackgroundThread.set(false);
+                // Error isn't recoverable according to Google's initial implementation. However, in
+                // practice this includes exceptions like NoRouteToHostException and "I/O error
+                // during system call" which should theoretically be transient in nature. Therefore
+                // we log it as "unretryable" but actually just backoff and retry.
                 mLogger.onUnretryableException(mqttException);
-                Log.e(TAG, "Disconnected from Cloud IoT Core and cannot reconnect", mqttException);
             }
+            sleepUntil(Instant.now().plusMillis(mBackoff.nextBackoff()));
             onDisconnect(getDisconnectionReason(mqttException));
         } catch (JoseException joseException) {
             // Error signing the JWT. Not a retryable error.
