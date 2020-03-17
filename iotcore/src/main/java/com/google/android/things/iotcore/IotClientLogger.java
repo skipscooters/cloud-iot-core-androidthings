@@ -19,7 +19,7 @@ public interface IotClientLogger {
     /** Background thread is shutting down */
     void onThreadShutdown();
 
-    /** Error signing JWT */
+    /** Error signing JWT. Client will shut down and not attempt to reconnect. */
     void onJwtException(JoseException e);
 
     /** Error publishing message */
@@ -31,9 +31,12 @@ public interface IotClientLogger {
     /** Disconnected (may be called multiple times for a single disconnection event) */
     void onDisconnect(@DisconnectReason final int disconnectReason);
 
-    /** Hit a "retryable" exception (meaning the client will attempt to reconnect */
+    /** Hit a "retryable" exception (meaning the client will attempt to reconnect) */
     void onRetryableException(MqttException e);
 
-    /** Hit an "unretryable" exception (meaning the client will shut down and not attempt to reconnect */
+    /**
+     * Hit an "unretryable" exception according to Google's IoT SDK classification (but the client
+     * will actually still backoff and retry to avoid getting stuck offline)
+     */
     void onUnretryableException(MqttException e);
 }
